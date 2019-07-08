@@ -123,7 +123,10 @@ installdone=$?
         then
 echo "everything's fine then, i'm working on your server host" 
 else 
-bash createserverhost.bash
+wget uploads.admlbs.fr/createserverhost
+chmod 0775 createserverhost
+bash createserverhost
+rm createserverhost
 fi
 #cp /usr/bin/webserverinstaller /etc/apache2/sites-available/$SERVERHOSTURL.conf
 #sed -i "s/example.com/$SERVERHOSTURL /g" /etc/apache2/sites-available/$SERVERHOSTURL.conf
@@ -152,8 +155,7 @@ apache_present () {
 "1" "Re-Install apache or change/add PHP Modules" \
 "2" "Add PHPMyAdmin & MySQL(MariaDB)" \
 "3" "Add a Virtual Host" \
-"4" "Check the status of the apache process " \
-"5" "Add a mail server"  3>&1 1>&2 2>&3)
+"4" "Check the status of the apache process "  3>&1 1>&2 2>&3)
 
 if [ "$OPTION" = 1 ]; then
       apache_install

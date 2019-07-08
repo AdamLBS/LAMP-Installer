@@ -1,0 +1,71 @@
+#!/bin/bash
+# By Adam ELAOUMARI under GNU General Public License v3.0
+# Contact : adam[at]admlbs.fr
+# Mosts comments are in french. If you have questions just e-mail me 
+LATEST_VERSION=$(curl -s 'https://uploads.admlbs.fr/version_apache')
+ACTUAL_VERSION=1.1
+SCRIPT_NAME=""
+NEW_FILE=""
+updater_check () {
+    if [ "$ACTUAL_VERSION" == "$LATEST_VERSION" ] 
+    then echo "Already last version."
+    else 
+  read  -p "You do not have the latest version of the program. We advise you to update it as soon as possible. Type y to start the update. (y or n)" doit 
+case $doit in  
+  n|N) echo -e "You refused to update the program." && exit ;; 
+  y|Y) echo -e "\e[32mLoading updater.\e[0m" ;;
+  *) echo  "Please type y (yes) or n (no)" && exit ;; 
+esac  
+	curl  --output
+check_upgrade
+    fi
+}
+check_upgrade () { 
+
+
+  [ -f "$NEW_FILE" ] && {
+
+
+    cp "$NEW_FILE" "$SCRIPT_NAME"
+    chmod 0777 "$SCRIPT_NAME"
+    rm -f "$NEW_FILE"
+
+clear
+echo "The script have been updated"
+    exit 0
+  }
+}
+#updater_check
+SERVERHOSTURL=$(whiptail --title "Web Server Installer" --inputbox "What's the URL of the server host you want to add ? " 10 60  3>&1 1>&2 2>&3)
+DIRECTORY=$(whiptail --title "Web Server Installer" --inputbox "Where are located the files of your new server host ? Example : /var/www/html. If this directory does not exist, the script will create the directory" 10 60  3>&1 1>&2 2>&3)
+whiptail --title "Web Server Installer" --yesno "Here's the summary of your virtual host : Is that okay for you? 
+URL : $SERVERHOSTURL 
+DIRECTORY : $DIRECTORY" 20 80
+installdone=$?
+        if [ $installdone = 0 ]; 
+        then
+echo "everything's fine then, i'm working on your server host" 
+else 
+bash createserverhost.bash
+fi
+#cp /usr/bin/webserverinstaller /etc/apache2/sites-available/$SERVERHOSTURL.conf
+#sed -i "s/example.com/$SERVERHOSTURL /g" /etc/apache2/sites-available/$SERVERHOSTURL.conf
+#sed -i 's|var/www/example|$DIRECTORY|g' /etc/apache2/sites-available/$SERVERHOSTURL.conf
+if cd $DIRECTORY 2> /dev/null; then echo " "  ; else echo -e "\e[32mThe folder does not exist therefore it has been created.\e[0m" && mkdir -p $DIRECTORY ; fi 
+
+echo "#### $SERVERHOSTURL
+<VirtualHost *:80>
+ServerName $SERVERHOSTURL
+DocumentRoot "$DIRECTORY"
+<Directory $DIRECTORY>
+Options Indexes FollowSymLinks MultiViews
+AllowOverride All
+Order allow,deny
+Allow from all
+Require all granted
+</Directory>
+</VirtualHost>" > /etc/apache2/sites-available/$SERVERHOSTURL.conf
+a2ensite $SERVERHOSTURL
+service apache2 restart
+clear
+echo "Done. $SERVERHOSTURL is online."
