@@ -43,7 +43,7 @@ sudo curl https://uploads.admlbs.fr/download.php?file=webinstall --output /usr/b
 
 # Launch
 **Please note that if you use the script for the first time, he will install automatically Apache2 and nothing else. In order to install MariaDB or PhpMyAdmin just restart the script using webinstall command.**
-** If you want to add a virtualhost just restart the script **
+**If you want to add a virtualhost just restart the script**
 * To launch the script and install your webserver you must use sudo or being root
 
 ```bash
