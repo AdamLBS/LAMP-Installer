@@ -18,7 +18,7 @@
 * Automatically install all prerequisites
 * Choice of PHP modules
 * Install latest stable versions of MariaDB, PhpMyAdmin and Apache
-* The user can install only apache 
+* The user can install only apache if he wants
 
 # Supported versions
 * Apache 2
