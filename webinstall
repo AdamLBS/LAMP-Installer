@@ -127,6 +127,9 @@ wget uploads.admlbs.fr/createserverhost
 chmod 0775 createserverhost
 bash createserverhost
 rm createserverhost
+fi
+#cp /usr/bin/webserverinstaller /etc/apache2/sites-available/$SERVERHOSTURL.conf
+#sed -i "s/example.com/$SERVERHOSTURL /g" /etc/apache2/sites-available/$SERVERHOSTURL.conf
 #sed -i 's|var/www/example|$DIRECTORY|g' /etc/apache2/sites-available/$SERVERHOSTURL.conf
 if cd $DIRECTORY 2> /dev/null; then echo " "  ; else echo -e "\e[32mThe folder does not exist therefore it has been created.\e[0m" && mkdir -p $DIRECTORY ; fi 
 
