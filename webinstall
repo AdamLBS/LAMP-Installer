@@ -1,0 +1,182 @@
+#!/bin/bash
+# By Adam ELAOUMARI under GNU General Public License v3.0
+# Contact : adam[at]admlbs.fr
+# Mosts comments are in french. If you have questions just e-mail me 
+#service=apache2
+LATEST_VERSION=$(curl -s 'https://uploads.admlbs.fr/version_apache')
+ACTUAL_VERSION=1.1
+SCRIPT_NAME=""
+NEW_FILE=""
+updater_check () {
+    if [ "$ACTUAL_VERSION" == "$LATEST_VERSION" ] 
+    then echo "Already last version."
+    else 
+  read  -p "You do not have the latest version of the program. We advise you to update it as soon as possible. Type y to start the update. (y or n)" doit 
+case $doit in  
+  n|N) echo -e "You refused to update the program." && exit ;; 
+  y|Y) echo -e "\e[32mLoading updater.\e[0m" ;;
+  *) echo  "Please type y (yes) or n (no)" && exit ;; 
+esac  
+	curl  --output
+check_upgrade
+    fi
+}
+check_upgrade () { 
+
+
+  [ -f "$NEW_FILE" ] && {
+
+
+    cp "$NEW_FILE" "$SCRIPT_NAME"
+    chmod 0777 "$SCRIPT_NAME"
+    rm -f "$NEW_FILE"
+
+clear
+echo "The script have been updated"
+    exit 0
+  }
+}
+#updater_check
+#mailinaboxinstall () {
+#curl -s https://mailinabox.email/setup.sh | sudo -E bash
+
+#}
+apache_install () {
+    cd /tmp/
+    whiptail --title "Web Server Installer" --yes-button "I agree" --no-button "I disagree" --yesno "The script will install the last version of apache2. For security reasons, it will install the last version of php." 20 80
+    APACHE_PHPEXTENSIONS=$(whiptail --title "Web Server Installer" --checklist \
+"Choose PHP Extensions using space." 20 78 4 \
+"libapache2-mod-php7.0" "Default PHP Extension for Apache 2" ON \
+"php7.0-mysql" "PHP For MYSQL " ON \
+"php7.0-curl" "cURL Extension for PHP" ON \
+"php7.0-json" "PHP Extension for JSON" ON \
+"php7.0-gd" "PHP Extension" ON \
+"php7.0-mcrypt" "PHP Extension" ON \
+"php7.0-msgpack" "PHP Extension" ON \
+"php7.0-intl" "PHP Extension" ON \
+"php7.0-sqlite3" "PHP Extension" ON \
+"php7.0-gmp" "PHP Extension" ON \
+"php7.0-geoip" "PHP Extension" ON \
+"php7.0-mbstring" "PHP Extension" ON \
+"php7.0-xml" "PHP Extension" ON \
+"php7.0-zip" "PHP Extension" ON  3>&1 1>&2 2>&3)
+echo "$APACHE_PHPEXTENSIONS" >> /tmp/php_extensions.txt
+sed -i 's/"//g' /tmp/php_extensions.txt # On va enlever les espaces pour permettre à apt de bien interprêter la commande
+APACHE_PHPEXTENSIONS_CORREC=`cat /tmp/php_extensions.txt`
+screen -dm apt-get -y install apache2 $APACHE_PHPEXTENSIONS_CORREC
+{
+        percentage="0"
+        while (true)
+        do
+            proc=$(ps aux | grep -v grep | grep -e "apt")
+            if [[ "$proc" == "" ]] && [[ "$percentage" -eq "0" ]];
+            then
+                break;
+            elif [[ "$proc" == "" ]] && [[ "$percentage" -gt "0" ]];
+            then
+                sleep 2
+                echo 98
+                sleep 1
+                echo 99
+                sleep 1
+                echo 100
+                sleep 1
+                break;
+            elif [[ "51" -eq "$percentage" ]]
+            then
+                percentage="30"
+            fi
+            sleep 1
+            echo $percentage
+            percentage=$(expr $percentage + 1)
+        done
+} | whiptail --title "Web Server Installer" --gauge "Installing..." 8 78 0
+rm /tmp/php_extensions.txt
+#fi
+}
+apache_install_phpmyadmin () {
+  MDPPHPMYADMIN=$(whiptail --title "Web server installer" --inputbox "The script will create a MYSQL user with the same rights as the root user to ensure that you can access it with PHPMyAdmin.The username of the user will be "LOGINADMIN". Please choose a password." 10 60  3>&1 1>&2 2>&3)
+    apt-get -y install mariadb-server
+    mysql -u root -paaaa   -e "CREATE USER 'LOGINADMIN'@'%' IDENTIFIED BY '$MDPPHPMYADMIN';GRANT ALL PRIVILEGES ON *.* TO 'LOGINADMIN'@'%' REQUIRE NONE WITH GRANT OPTION MAX_QUERIES_PER_HOUR 0 MAX_CONNECTIONS_PER_HOUR 0 MAX_UPDATES_PER_HOUR 0 MAX_USER_CONNECTIONS 0" 
+    apt-get -y install  mcrypt
+    apt-get -y install phpmyadmin
+    clear
+    echo "Done." 
+}
+
+apache_status () {
+ i=`ps -eaf | grep -i apache2 |sed '/^$/d' | wc -l`
+echo $i
+if [[ $i > 1 ]]
+ then echo -e "\e[32mApache2 is running.\e[0m"  
+ else echo -e "\e[31mApache2 is not running. Starting apache2...\e[0m" && service apache2 start
+fi  
+}
+apache_virtualhost () {
+  SERVERHOSTURL=$(whiptail --title "Web Server Installer" --inputbox "What's the URL of the server host you want to add ? " 10 60  3>&1 1>&2 2>&3)
+DIRECTORY=$(whiptail --title "Web Server Installer" --inputbox "Where are located the files of your new server host ? Example : /var/www/html. If this directory does not exist, the script will create the directory" 10 60  3>&1 1>&2 2>&3)
+whiptail --title "Web Server Installer" --yesno "Here's the summary of your virtual host : Is that okay for you? 
+URL : $SERVERHOSTURL 
+DIRECTORY : $DIRECTORY" 20 80
+installdone=$?
+        if [ $installdone = 0 ]; 
+        then
+echo "everything's fine then, i'm working on your server host" 
+else 
+bash createserverhost.bash
+fi
+#cp /usr/bin/webserverinstaller /etc/apache2/sites-available/$SERVERHOSTURL.conf
+#sed -i "s/example.com/$SERVERHOSTURL /g" /etc/apache2/sites-available/$SERVERHOSTURL.conf
+#sed -i 's|var/www/example|$DIRECTORY|g' /etc/apache2/sites-available/$SERVERHOSTURL.conf
+if cd $DIRECTORY 2> /dev/null; then echo " "  ; else echo -e "\e[32mThe folder does not exist therefore it has been created.\e[0m" && mkdir -p $DIRECTORY ; fi 
+
+echo "#### $SERVERHOSTURL
+<VirtualHost *:80>
+ServerName $SERVERHOSTURL
+DocumentRoot "$DIRECTORY"
+<Directory $DIRECTORY>
+Options Indexes FollowSymLinks MultiViews
+AllowOverride All
+Order allow,deny
+Allow from all
+Require all granted
+</Directory>
+</VirtualHost>" > /etc/apache2/sites-available/$SERVERHOSTURL.conf
+a2ensite $SERVERHOSTURL
+service apache2 restart
+clear
+echo "Done. $SERVERHOSTURL is online."
+}
+apache_present () {
+  OPTION=$(whiptail --nocancel --title "Apache Manager" --menu "It seems like apache is already installed... What do you want to do ?" 15 60 4 \
+"1" "Re-Install apache or change/add PHP Modules" \
+"2" "Add PHPMyAdmin & MySQL(MariaDB)" \
+"3" "Add a Virtual Host" \
+"4" "Check the status of the apache process " \
+"5" "Add a mail server"  3>&1 1>&2 2>&3)
+
+if [ "$OPTION" = 1 ]; then
+      apache_install
+else
+if [ "$OPTION" = 2 ]; then
+     apache_install_phpmyadmin
+else
+  if [ "$OPTION" = 3 ]; then
+        apache_virtualhost
+else
+  if [ "$OPTION" = 4 ]; then
+        apache_status
+fi
+fi
+fi
+fi
+}
+
+if [ $(dpkg-query -W -f='${Status}' apache2 2>/dev/null | grep -c "ok installed") -eq 0 ]; 
+then
+  apache_install
+  else
+  apache_present
+fi
+
+
