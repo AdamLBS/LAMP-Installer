@@ -1,4 +1,4 @@
-# Apache, MySQL, MariaDB & PhpMyAdmin self-installer
+# Apache, MariaDB & PhpMyAdmin self-installer
 * [Requirements](#system-requirements)
 * [Features](#features)
 * [Supported versions](#supported-versions)
